@@ -1,0 +1,860 @@
+\chapter{Euristiche per il TSP}
+
+Dalla \textit{Hardness} di TSP si evince che una sua risoluzione esatta, per ogni istanza del problema,
+sia computazionalmente intrattabile anche per grafi di modeste dimensioni. L'importanza dei risvolti 
+applicativi, tuttavia, ci costringe a non abbandonare completamente il suo studio e anzi ci spinge
+ad indagare più a fondo alla ricerca di tecniche per aggirare il vincolo computazionale. Vi sono infatti
+almeno tre strade che possiamo percorrere: se l'istanza è piccola allora un approccio \textit{bruteforce}
+è ancora utilizzabile; è possibile tentare di risolvere casi particolari, (\textit{e.g.} un'istanza 
+euclidea che ammette una \textit{collana}\cite{Neck}); è possibile accettare soluzioni \textit{quasi-ottime}. 
+Quest'ultimo è l'approccio di tipo euristico e, generalmente, soluzioni vicine all'ottimalità sono più che sufficienti. 
+Occorre quindi definire chiaramente quello che intendiamo quando parliamo di soluzioni ``quasi-ottime''.
+
+\begin{definition}[\textbf{$\rho{}$-approssimazione}]
+    Sia $\mathcal{P}$ un problema di minimizzazione, $\mathcal{A}$ un'euristica per
+    $\mathcal{P}$ e $\rho{}:\mathbb{N}\rightarrow{}\mathbb{R}$. Diremo che
+    $\mathcal{A}$ è $\rho$-approssimato se per ogni istanza $x \in \mathcal{P}$ di dimensione $n$ con soluzione
+    esatta \textbf{OPT} si ha $\mathcal{A}(n) \leq \rho{}(n)\textbf{OPT}$. Diremo inoltre che $\rho$
+    è il rapporto di approssimazione di $\mathcal{A}$.
+
+\end{definition}
+\ \\
+\ \\
+Nel caso del TSP possiamo suddividere le euristiche in tre categorie.
+
+\section{Tour construction}
+
+Nelle euristiche di tipo ``tour construction'' il circuito viene costruito incrementalmente e l'algoritmo
+termina appena il tour così creato è valido. Di seguito elenchiamo diversi esempi di euristiche basate
+sul tour construction.
+\ \\
+
+\subsection{Strip (\texttt{STRIP})}
+
+Questa euristica viene applicata su istanze \textit{geometriche} di STSP. L'idea è quella
+di cercare il minimo rettangolo che contiene tutti i punti del problema, suddividerlo in $\sqrt{\frac{N}{3}}$
+\textit{strips} verticali e costruire il tour immaginando di percorrere ogni strip verticalmente, alternando il
+verso di percorrenza ad ogni nuova strip. Il tour verrà quindi chiuso collegando l'ultimo punto con il primo.
+La ricerca del rettangolo minimo può essere svolta linearmente scandendo l'insieme dei punti e memorizzandone
+le coordinate estremali (min/max ascissa e min/max ordinata). La suddivisione dei punti nelle strisce può
+essere ancora svolta linearmente. La scansione ordinata dei punti nella strip può essere simulata
+ordinando preventivamente i punti per ordinata scegliendo un sorting in senso crescente o decrescente
+a secondo di quale strip si consideri. I vantaggi principali di questa euristica sono senza dubbio la semplicità
+concettuale e implementativa, nonché la velocità di esecuzione. Tuttavia, è facile notare come \texttt{STRIP}
+abbia un rapporto di approssimazione $\rho(n) \in \Omega(\sqrt{n})$: si pensi infatti ad un'instanza in cui i punti
+siano ai limiti delle strip. Per punti uniformemente distribuiti nel quadrato unitario, il
+tour prodotto è in media non più lungo di $0.93\sqrt{n}$\cite{STRIP}.
+\ \\
+
+\subsection{Nearest Neighbor (\texttt{NN})}
+
+L'idea è quella di avere, ad ogni passo, un tour parziale da estendere
+aggiungendo un vertice non ancora presente che sia a distanza minima dal vertice aggiunto al passo precedente.
+
+\begin{algorithm}[H]
+\caption{}
+\begin{algorithmic}[1]
+\Function{NearestNeighbor}{$G=(V,E), w$}
+    \State $n \gets |V|$
+    \State $v \gets \texttt{RandomIn}(V)$
+    \State $T \gets \{v\}$
+    \State $F \gets V \setminus T$
+    \For{$i \gets 2,\; i \leq n,\; i \gets i+1$}
+        \State $\texttt{candidates} \gets \varnothing$
+        \State $\texttt{bestCost} \gets \infty$
+        \ForEach{$u \in F$}
+            \State $c \gets w(v,u)$
+            \If{$c < \texttt{bestCost}$}
+                \State $\texttt{candidates} \gets \{u\}$
+                \State $\texttt{bestCost} \gets c$
+            \ElsIf{$c = \texttt{bestCost}$}
+                \State $\texttt{candidates} \gets \texttt{candidates} \cup \{u\}$
+            \EndIf
+        \EndFor
+        \State $v \gets \texttt{RandomIn}(\texttt{candidates})$
+        \State $T \gets T \cup \{v\}$
+        \State $F \gets F \setminus \{v\}$
+    \EndFor
+    \State
+    \State \Return $T$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+% \begin{enumerate}
+%     \item Si scelga $v_1 \in V$ e si inizializzi $i := 2$.
+    
+%     \item Sia $T_{i-1} = \{v_1, \dots, v_{i-1}\}$. Si scelga $u \in argmin\big\{w(v_{i-1}, x) : x
+%             \in V \setminus T_{i-1}\big\}$.
+
+%     \item Si definisca $v_i := u$ e si incrementi $i := i+1$.
+    
+%     \item Se $i \leq n$ si ritorni al passo $2$.
+    
+%     \item Il tour trovato è $(v_1, v_2, \dots, v_n)$
+
+% \end{enumerate}
+% Al passo $2$, nel caso vi fosserò più alternative per $u$, se ne scelga una casualmente.\\
+Assumendo la disuguaglianza triangolare, \texttt{NN} ha un rapporto di approssimazione
+$\rho(n) = \frac{1+{\lceil\log{n}\rceil}}{2}$ \cite{STSP}.
+
+\subsection{Nearest Insertion (\texttt{NI})}
+
+Viene scelto un vertice iniziale e ad ogni passo
+viene aggiunto il vertice libero più vicino al tour nella posizione che minimizzi l'incremento di costo.
+
+\begin{algorithm}[H]
+\caption{}
+\begin{algorithmic}[1]
+\Function{NearestInsertion}{$G=(V,E), w$}
+    \State $n \gets |V|$
+    \State $v \gets \texttt{RandomIn}(V)$
+    \State $d \gets \texttt{new Array}(w(v))$ \Comment For each vertex $u$, $d(u)$ is the minimum distance from $T$
+    \State $T \gets \{v\}$
+    \State $F \gets V \setminus T$
+    \For{$i \gets 2, i \leq n, i \gets i+1$}
+        \State $\texttt{candidates} \gets \varnothing$
+        \State $\texttt{bestCost} \gets \infty$
+        \ForEach{$u \in F$}
+            \State $c \gets d(u)$
+            \If{$c < \texttt{bestCost}$}
+                \State $\texttt{candidates} \gets \{u\}$
+                \State $\texttt{bestCost} \gets c$
+            \ElsIf{$c = \texttt{bestCost}$}
+                \State $\texttt{candidates} \gets \texttt{candidates} \cup \{u\}$
+            \EndIf
+        \EndFor
+        \State
+        \State $v \gets \texttt{RandomIn}(\texttt{candidates})$
+        \State $\texttt{NearestInsert}(v, T, i-1, w)$
+        \State $F \gets F \setminus \{v\}$
+        \State
+        \ForEach{$u \in F$}
+            \State $d(u) \gets \min\{d(u), w(v,u)\}$
+        \EndFor
+    \EndFor
+    \State
+    \State \Return $T$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{}
+\begin{algorithmic}[1]
+\Function{NearestInsert}{$v, T, m, w$} \Comment Insert $v$ in the ``best'' position with respect to \texttt{NI}
+    \State $p \gets m$
+    \State $\texttt{bestCost} \gets \texttt{costToInsert}(t_m, v, t_1,w)$
+    \For{$i \gets 1, i < m, i \gets i+1$}
+        \State $c \gets \texttt{costToInsert}(t_i,v,t_{i+1})$
+        \If{$c < \texttt{bestCost}$}
+            \State $\texttt{bestCost} \gets c$
+            \State $p \gets i$
+        \EndIf
+    \EndFor
+    \State
+    \State $\texttt{insertIn}(v, T, p)$
+\EndFunction
+\State
+\Function{costToInsert}{$x,v,y,w$} \Comment Cost of inserting $v$ between $x$ and $y$
+    \State \Return  $w(x,v)+w(v,y)-w(x,y)$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+% Formalmente:
+% \begin{enumerate}
+%     \item Si scelga $v_1 \in V$, si definisca $j_{1,1} := v_1$ e si inizializzi $i := 2$
+    
+%     \item Sia $T_{i-1} = \{v_1, \dots, v_{i-1}\}$. Si scelga $u \in argmin\big\{\min\{w(x, y) : y \in T_{i-1}\}
+%             : x \in V \setminus T_{i-1}\big\}$.
+
+%     \item Si definisca $v_i := u$.
+    
+%     \item Si scelga $p \in argmin\big\{w(j_{i-1, x}, v_i) + w(v_i, j_{i-1, x+1}) - 
+%                                         w(j_{i-1, x}, j_{i-1, x+1}) : x \in \{1, \dots, i-1\}\big\}$.
+
+%     \item Si definiscano $j_{i, t}   := j_{i-1, t}$ per $t \leq p$.\\
+%           Si definisca   $j_{i, p+1} := v_i$.\\
+%           Si definiscano $j_{i, t+1} := j_{i-1, t}$ per $t > p$.
+
+%     \item Si incrementi $i := i+1$.
+    
+%     \item Se $i \leq n$ si ritorni al passo 2.
+    
+%     \item Il tour trovato è $(j_{n,1}, j_{n,2}, \dots, j_{n,n})$
+    
+% \end{enumerate}
+% Ai passi $2$ e $4$, se ci fossero più possibilità, se ne scelga una casualmente. Il significato delle
+% etichette $j_{x,y} = z$ è ``al passo $x$, $z$ si trova in posizione $y$''.\\
+Assumendo la disuguaglianza triangolare, \texttt{NI} ha un rapporto di approssimazione 
+$\rho(n) = \big(2-\frac{2}{n}\big)$\cite{STSP}.
+\ \\
+
+\subsection{Christofides (\texttt{CHR})}
+
+L'algoritmo di Christofides costruisce il tour da un circuito euleriano
+su un particolare multigrafo costruito da $G$.\\
+
+\begin{algorithm}[H]
+\caption{}
+\begin{algorithmic}[1]
+\Function{Christofides}{$G=(V,E), w$}
+    \State $\texttt{Tree} \gets \texttt{Prim}(G,w)$
+    \State $\mathcal{O} \gets \texttt{getOdds}(\texttt{Tree}, V, n)$
+    \State $\mathcal{M} \gets \texttt{minWeightMatching}(\mathcal{O},w)$
+    \State $\mathcal{G} \gets \texttt{new multigraph}(\mathcal{M}, \texttt{Tree})$
+    \State $\mathcal{E} \gets \texttt{findEulerTour}(\mathcal{G})$
+    \State $T \gets \texttt{shortcut}(\mathcal{E})$ \Comment Delete occurrences after the first
+    \State
+    \State \Return $T$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{}
+\begin{algorithmic}[1]
+\Function{Prim}{$G=(V,E), w$}
+    \State $n \gets |V|$
+    \State $v \gets \texttt{RandomIn}(V)$
+    \State $d \gets \texttt{new Array}(w(v))$
+    \State $p \gets \texttt{new Array}(n, v)$
+    \State $T \gets \{v\}$
+    \State $F \gets V \setminus T$
+    \State
+    \For{$i \gets 2, i \leq n, i \gets i+1$}
+        \State $\texttt{bestCost} \gets \infty$
+        \ForEach{$u \in F$}
+            \State $c \gets d(u)$
+            \If{$c < \texttt{bestCost}$}
+                \State $v \gets u$
+                \State $\texttt{bestCost} \gets c$
+            \EndIf
+        \EndFor
+        \State
+        \State $T \gets T \cup \big\{ \{p(v),v\} \big\}$
+        \State $F \gets F \setminus \{v\}$
+        \ForEach{$u \in F$}
+            \State $c \gets w(v,u)$
+            \If{$c < d(u)$}
+                \State $d(u) \gets c$
+                \State $p(u) \gets v$
+            \EndIf
+        \EndFor
+    \EndFor
+    \State
+    \State \Return $T$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{}
+\begin{algorithmic}[1]
+\Function{getOdds}{$\texttt{Tree}, V, n$}
+    \State $deg \gets \texttt{new Array}(n,0)$
+    \ForEach{$\{u,v\} \in \texttt{Tree}$}
+        \State $deg(u) \gets deg(u)+1$
+        \State $deg(v) \gets deg(v)+1$
+    \EndFor
+    \State
+    \State $\mathcal{O} \gets \varnothing$
+    \ForEach{$v \in V$}
+        \If{$deg(v) \equiv_{2} 1$}
+            \State $\mathcal{O} \gets \mathcal{O} \cup \{v\}$
+        \EndIf
+    \EndFor
+    \State
+    \State \Return $\mathcal{O}$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+\ \\
+Il minimum weight perfect matching dei vertici di $\mathcal{O}$ esiste sempre in 
+virtù del seguente 
+\begin{theorem}
+    In ogni albero $T$ vi è sempre un numero pari di vertici di grado dispari.
+\end{theorem}
+\begin{proof}
+    Sia $T$ un albero di $n$ vertici e $n-1$ archi. Denotiamo con $p_i$ il grado dell'$i$-esimo 
+    vertice di grado pari e con $d_i$ il grado dell'$i$-esimo vertice di grado dispari. È noto che 
+    la somma dei gradi di un grafo non diretto qualsiasi sia il doppio del numero degli archi 
+    (\textit{handshake lemma}). Supponiamo per assurdo che vi siano $2m+1$ vertici di grado dispari, allora
+    \begin{align*}
+        2(n-1)  &= \displaystyle\sum_{i=1}^{n}{deg(v_i)} = p_1+p_2+\dots+p_k + d_1+d_2+\dots+d_{2m+1} \\
+                &= 2t + (2a_1+1) + (2a_2+1) + \dots + (2a_{2m+1}+1) \\
+                &= 2t + 2(a_1+a_2+\dots+a_{2m+1}) + 2m+1 \\
+                &= 2(t + a_1+a_2+\dots+a_{2m+1}+m)+1 \\
+                &= 2q+1
+    \end{align*}
+    Il membro di sinistra è pari, il membro di destra è dispari: assurdo.
+\end{proof}
+\ \\
+Un circuito euleriano in $\mathcal{G}$ esiste sempre in virtù del seguente
+\begin{theorem}
+    Il multigrafo $\mathcal{G}$ ha ogni vertice di grado pari.
+\end{theorem}
+\begin{proof}
+    Banalmente, il multigrafo viene costruito aggiungendo gli archi del matching all'MST. Questi 
+    sono incidenti a tutti e soli i vertici di grado dispari. Inoltre, ogni vertice di grado dispari 
+    ha esattamente un arco del matching incidente.
+\end{proof}
+Il Teorema 2.1.2 assicura che $\mathcal{G}$ soddisfi la condizione necessaria e sufficiente per l'esistenza 
+di un circuito euleriano.
+\ \\
+
+Assumendo la disuguaglianza triangolare, \texttt{CHR} assicura un rapporto di approssimazione \textbf{costante}
+$\rho(n) = 1.5$\cite{CHR}, il migliore tra gli algoritmi polinomiali conosciuti.
+\ \\
+
+\section{Tour improvement}
+
+Un algoritmo di tipo ``tour improvement'' prende in input un tour iniziale $x_0 \in \mathcal{X}$ e, 
+attraverso degli scambi, produce un tour valido migliore del precedente. Questa tecnica è di tipo 
+\textit{Local Search}: ad ogni passo vengono esaminati un insieme di ``vicini'' $\mathcal{N}_{x} \in \mathscr{P}(\mathcal{X})$ 
+(raggiungibili con gli scambi), viene assegnato loro un punteggio tramite $w : \mathcal{X} \rightarrow \mathbb{N}$ 
+e ne viene selezionato uno per il passo successivo, fino a raggiungere una condizione di terminazione. 
+Più formalmente, lo schema di Local Search per il TSP può essere formulato nel modo seguente:
+
+\begin{algorithm}[H]
+\caption{}
+\begin{algorithmic}[1]
+\Function{LocalSearchTSP}{$\mathcal{X},\; w:\mathcal{X}\rightarrow \mathbb{N},\; \mathcal{N}:\mathcal{X}\rightarrow \mathscr{P}(\mathcal{X})$}
+    \State $s \gets \texttt{choose}(\mathcal{X})$
+    \State $\Delta \gets w(s)$
+    \While{$\Delta > 0$}
+        \State $G \gets \big\{y \in \mathcal{N}(s) : w(y) < w(s)\big\}$
+        \State $x \gets \texttt{selectNext}(G)$
+        \State $\Delta \gets w(s)-w(x)$
+        \State $s \gets x$
+    \EndWhile
+    \State \Return $s$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+Dove \texttt{choose} e \texttt{selectNext} dipendono dalle scelte fatte durante la stesura del modello. 
+Una scelta molto comune per \texttt{choose} è la scelta causuale; per \texttt{selectNext} si possono utilizzare 
+approcci di tipo \textit{best-improvement} (dove viene scelto $y$ che minimizzi $w(\mathcal{N}_s$)), \textit{first-improvement} 
+(dove viene scelto il primo $y$ che abbia costo minore di $s$) o \textit{ad-hoc}. Al termine 
+della procedura si raggiungerà un minimo locale $s$ dello spazio delle soluzioni $\mathcal{X}$.
+
+% \begin{enumerate}
+%     \item Sia $\mathcal{X}$ l'insieme dei tour validi, $w: \mathcal{X} \rightarrow \mathbb{N}$ la funzione
+%             che associa ad ogni tour un costo (\textit{e.g. la somma dei pesi degli archi}) e 
+%             $\mathcal{N}: \mathcal{X} \rightarrow \mathcal{P}(\mathcal{X})$ la funzione che associa ad ogni
+%             tour valido un insieme di ``vicini''.
+
+%     \item Si scelga $x_0 \in \mathcal{X}$, si definisca $s := x_0$ e si inizializzi $i := 1$.
+    
+%     \item Si scelga $x_i \in \big\{y \in \mathcal{N}(s) : w(y) < w(s)\big\}$.
+    
+%     \item Se $x_i$ esiste, si ridefinisca $s := x_i$, si incrementi $i := i+1$ e si ritorni al punto $3$.
+    
+%     \item La soluzione approssimata è $s$.
+    
+% \end{enumerate}
+\ \\
+
+Come si evince dallo schema, la parte cruciale del Local Search è la scelta di $\mathcal{N}$. Vedremo, nella prossima
+sottosezione, alcuni esempi per scegliere il vicinato.
+
+\subsection{k-OPT e 3-OPT migliorato}
+
+Senza perdita di generalità, considereremo sempre un tour $T = (0, 1, \dots, n-1)$. Inoltre, avendo a che fare 
+con un'entità ciclica, faremo spesso uso di aritmetica modulare; definiamo quindi 
+$$\pls: V\times\mathbb{N} \rightarrow V \text{ tale che } x\pls{}t\; := \;(x+t)\!\!\!\!\mod{}n $$
+$$\mns: V\times\mathbb{N} \rightarrow V \text{ tale che } x\mns{}t\; := \;(x-t)\!\!\!\!\mod{}n $$
+
+e definiamo le ``distanze'' tra gli elementi del tour come 
+$$d^+: V^2 \rightarrow \mathbb{N} \text{ tale che } d^+(a, b) := argmin\{t \in \mathbb{N} : a\pls{}t=b\}$$
+$$d^-: V^2 \rightarrow \mathbb{N} \text{ tale che } d^-(a, b) := argmin\{t \in \mathbb{N} : a\mns{}t=b\}$$
+$$d: V^2 \rightarrow \mathbb{N} \text{ tale che } d(a, b) := min\{d^+(a, b), d^-(a, b)\}$$
+\ \\
+
+\begin{definition}[\textbf{Mossa k-OPT}]
+Sia $k \in \mathbb{N}$ e $T$ un tour. Una mossa k-OPT consiste nella rimozione di un insieme $R$ di $k$ archi
+di $T$ e l'inserimento di un insieme $I$ di $k$ archi in modo tale che $T' := (T\setminus{}R)\cup{}I$ sia ancora
+un tour valido. Scriveremo quindi $T \opt{I}{R}{k} T'$ e identificheremo la mossa con la tripla $(R,I,k)$.
+\end{definition}
+
+\begin{definition}[\textbf{Selezione}]
+    Una \textbf{selezione} per una mossa k-OPT è una $k$-pla $S = (i_1,i_2,\dots,i_k)$ che identifica 
+    $R(S) = \big\{\{i_j,i_j\pls{}1\} : j \in \{1,2,\dots,k\}\big\}$. Diremo che la selezione è
+    \textbf{completa} se $d(i_j, i_h)~\ge~2 \text{ per ogni } j\neq{}h$.
+\end{definition}
+
+\begin{definition}[\textbf{Reinserimento}]
+    Sia data una selezione $S$, diremo che $I \subseteq E$ con $|I|=k$ è un \textbf{reinserimento} per $S$ se
+    e solo se $(R(S),I,k)$ è una mossa k-OPT. Diremo inoltre che $I$ è \textbf{pura} se $I\cap{}R(S)=\varnothing$,
+    \textbf{degenere} altrimenti.
+\end{definition}
+
+Un'euristica k-OPT è una Local Search dove, per ogni $x \in \mathcal{X}$, definiamo
+$$\mathcal{N}_k(x) = \Big\{y : \exists{(I, R)}\Big(x \opt{I}{R}{k} y\Big) \Big\} \setminus \{x\}$$
+
+Sebbene la ricerca della mossa k-OPT \textit{best-improving} abbia complessità polinomiale $\Theta(n^k)$,
+da un punto di vista pratico tale ricerca diventa intrattabile già per valori di $k \ge 3$.
+In \cite{3opt} viene descritta una procedura efficiente per l'esplorazione di $\mathcal{N}_3$ nel caso
+in cui si considerino solo selezioni complete e reinserimenti puri (che vengono chiamate mosse ``vere'' e saranno
+le uniche considerate da qui in avanti); tale procedura sembra avere, in media, una complessità inferiore 
+alla cubica. Prima di proseguire, diamo alcune definizioni e fissiamo la notazione. Definiamo
+$$\tau^+: V^2 \rightarrow \mathbb{Z} \text{ tale che } \taup{a}{b} := w(a,a\pls{}1) - w(a,b\pls{}1)$$
+$$\tau^-: V^2 \rightarrow \mathbb{Z} \text{ tale che } \taum{a}{b} := w(a,a\mns{}1) - w(a,b\mns{}1)$$
+$$\mathcal{S} = \{S : S \text{ è completa }\}$$
+$$\mathcal{S}_{ab} = \big\{ (x,y) : \exists(v_1, v_2, v_3) \in \mathcal{S} \text{ tale che } v_a=x \wedge v_b=y \big\}$$
+\ \\
+Una mossa 3-OPT è caratterizzata dal \textit{removal set} $R(S)$ di $3$ archi che vengono rimossi dal tour e dal
+\textit{reinsertion set} $I$ di $3$ archi che vengono aggiunti per costruire un nuovo tour. Vi sono però
+diversi modi per ristabilire un tour, data la selezione $S$. Innanzitutto, notiamo che una volta rimossi
+gli archi della selezione, il tour viene scomposto in tre segmenti che possono essere etichettati con $1,2,3$.
+Supponendo di iniziare sempre il nuovo tour percorrendo il segmento $1$ in senso orario, la scelta di $I$ 
+determina univocamente il verso di percorrenza degli altri segmenti. In particolare, possiamo identificare
+uno \textbf{schema di reinserimenti} come una permutazione con segno di $\{2,3\}$: ad esempio, lo schema
+$\langle+3,-2\rangle$ indica che il nuovo tour verrà costruito dalla procedura:
+
+\begin{algorithm}
+\caption{$3$-OPT with $\langle +3,-2 \rangle$ scheme}
+\begin{algorithmic}[1]
+\Function{Execute}{$T,i_1,i_2,i_3$}
+    \State $S_1 \gets T[i_3 \pls 1 \dots i_1]$
+    \State $S_2 \gets T[i_1 \pls 1 \dots i_2]$
+    \State $S_3 \gets T[i_2 \pls 1 \dots i_3]$
+    \State $S_2 \gets \texttt{reverse}(S_2)$
+    \State
+    \State $T' \gets S_1 \cup \{i_1, i_2 \pls 1\} \cup S_3 \cup \{i_3, i_2\} \cup S_2 \cup \{i_1 \pls 1, i_3\}$
+    \State \Return $T'$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+\noindent
+È semplice notare come gli schemi di reinserimenti puri siano solo:
+$\langle+3,+2\rangle, \langle-2,-3\rangle, \langle+3,-2\rangle, \langle-3,+2\rangle$.\\
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=400pt]{img/reinsertionSchemes.png}
+    \caption{Una rappresentazione grafica degli schemi di reinserimenti. \textit{Fonte immagine \cite{3opt}}.}
+\end{figure}
+
+Consideriamo una selezione $S = (i_1, i_2, i_3)$, uno schema di reinserimenti $r$ e i rispettivi insiemi
+$R(S)$ e $I(r)$. Allora, il guadagno della mossa $(R(S), I(r), 3)$ è $$\Delta{}(R, I) = w(R) - w(I)$$
+In particolare, è possibile scomporre $\Delta$ come somma di tre funzioni di due parametri ciascuna:
+$$\Delta{}(i_1,i_2,i_3) = f_1(i_1, i_2) + f_2(i_2, i_3) + f_3(i_1, i_3)$$
+
+\newpage
+Più precisamente, manipolando $\Delta$ per ogni schema di reinserimenti, si ottengono:
+
+
+\begin{alignat*}{5}
+    \langle+3,+2\rangle:& \qquad &f_1(x,y) &= \taup{x}{y} \qquad &f_2(x,y) &= \taup{x}{y} \qquad &f_3(x,y) &= \taup{y}{x} \\
+    \langle-2,-3\rangle:& \qquad &f_1(x,y) &= \taup{x}{y\mns{}1} \qquad &f_2(x,y) &= \taum{x\pls{}1}{y\pls{}2} \qquad &f_3(x,y) &= \taup{y}{x} \\
+    \langle+3,-2\rangle:& \qquad &f_1(x,y) &= \taup{x}{y} \qquad &f_2(x,y) &= \taup{x}{y\mns{}1} \qquad &f_3(x,y) &= \taum{y\pls{}1}{x\pls{}2} \\
+    \langle-3,+2\rangle:& \qquad &f_1(x,y) &= \taum{x\pls{}1}{y\pls{}2} \qquad &f_2(x,y) &= \taup{x}{y} \qquad &f_3(x,y) &= \taup{y}{x\mns{}1} \\
+\end{alignat*}
+Dove $$dom(f_1) = \mathcal{S}_{12}, \qquad dom(f_2) = \mathcal{S}_{23}, \qquad dom(f_3) = \mathcal{S}_{13}$$
+
+Fatte queste premesse, ci occuperemo ora di presentare l'idea descritta in \cite{3opt}.
+L'assunzione che viene fatta è quella di supporre l'esistenza di un oracolo che, date due etichette $(a,b)$,
+restituisca in tempo costante una coppia $(x,y) \in \mathcal{S}_{ab}$ che sia in una mossa 
+\textit{best-improving}. In questo modo è necessaria
+una scansione di costo lineare per trovare il ``terzo'' vertice della selezione che massimizzi $\Delta$.
+L'obbiettivo è ora quello di simulare in modo efficiente l'oracolo: in particolare vogliamo restituire coppie
+che appartengano ``molto probabilmente'' a una mossa \textit{best-improving}. Per fare ciò, l'osservazione chiave
+è la seguente:
+\begin{observation}[]
+    Supponiamo di cercare la mossa \textit{best-improving}, di avere un ``campione''\\
+    $S^*=(\overline{i_1}, \overline{i_2}, \overline{i_3})$ di costo $V = \Delta(S^*)$ e un
+    candidato $S~=~(i_1,i_2,i_3)$. Allora, $\Delta(S) > \Delta(S^*)$ se e solo se
+    $$\Bigg(f_1(i_1,i_2) > \frac{V}{3}\Bigg) \vee \Bigg(f_2(i_2,i_3) > \frac{V}{3}\Bigg) \vee \Bigg(f_3(i_1,i_3) > \frac{V}{3}\Bigg)$$
+\end{observation}
+
+Da questa semplice osservazione nasce l'idea di effettuare una ricerca in tre fasi: ad ogni fase 
+$j \in \{1,2,3\}$ vengono enumerate le coppie che soddisfano il $j$-esimo disgiunto, dalla ``più promettente''
+alla ``meno promettente'', terminando la fase appena la condizione non è più soddisfatta. La ricerca ``ordinata''
+viene effettuata attraverso delle \textit{MaxHeap} e il valore $V$ viene aggiornato ogniqualvolta venga trovato
+un nuovo ``campione''. Ad ogni passo, viene selezionata la coppia in cima alla heap e tramite una scansione
+lineare si ricerca il terzo indice. Grazie alla combinazione tra l'organizzazione tramite heap e l'aggiornamento
+online di $V$ si dimostra empiricamente che, in media, le selezioni considerate sono molte meno di $\Theta(n^3)$.
+La procedura può essere descritta in questo modo:
+
+\begin{algorithm}[H]
+\caption{}
+\begin{algorithmic}[1]
+\Function{Modified3Opt}{$T, w$}
+    \State $S^* \gets \varnothing,\quad r^* \gets \varnothing,\quad V \gets 0$
+    \ForEach{$r \in Schemes$}
+        \For{$j \gets 1,\; j \leq 3,\; j \gets j+1$}
+            \State $H \gets \texttt{makeHeapWithBound}(V, j)$ \Comment Only pairs with gain $>\frac{V}{3}$
+            \While{$|H|>0 \;\wedge\; \texttt{topPriority}(H) > \frac{V}{3}$}
+                \State $\{x,y\} \gets \texttt{popElement}(H)$
+                \State $z \gets \texttt{getZ}(x,y,j)$
+                \State $\texttt{gain} \gets \texttt{getGain}(x,y,z,j)$
+                \If{$V < \texttt{gain}$} \Comment Update gain information, best selection and best scheme
+                    \State $V \gets \texttt{gain}$
+                    \State $S^* \gets \{x,y,z\}$
+                    \State $r^* \gets r$
+                \EndIf
+            \EndWhile
+        \EndFor
+    \EndFor
+    \State $\texttt{apply}(T, S^*, r^*)$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+% \begin{enumerate}
+%     \item Si inizializzino $i:=1$, $j:=1$, $V:=0$, $S^*=\varnothing$, $r^*:=\varnothing$.
+%     \item Si fissi lo schema $r:=r_i$.
+%     \item Si costruisca la heap $H_j$ sulle coppie di $dom(f_j)$ che soddisfano la condizione $j$
+%             dell'osservazione 2.1 e si inizializzi $V':=0$, $S:=\varnothing$.
+%     \item Se $H_j$ non è vuota, si prenda la coppia $(x,y)$ in cima alla heap, e si scansionino
+%             gli indici validi alla ricerca di $z$ che massimizzi $\Delta$ e si calcoli tale valore,
+%             salvandolo in $V'$ e si imposti $S$ come la selezione data da $x,y,z$. Altrimenti si vada al
+%             punto $6$.
+%     \item Se $V'>V$ allora $V:=V'$, $S^*:=S$ e $r^*:=r$.
+%     \item Se $j<3$ allora si incrementi $j:=j+1$ e si vada al punto $3$.
+%     \item Se $i<4$ allora si incrementi $i:=i+1$ si vada al punto $2$.
+%     \item Se $S^*\neq\varnothing$ si applichi la mossa $(R(S^*), I(r^*), 3)$.
+% \end{enumerate}
+
+\subsection{Lin-Kernighan}
+
+Abbiamo considerato, nella sezione precedente, un approccio di tipo $k$-OPT: ad ogni passo,
+un tour viene migliorato applicando $k$ rimozioni e $k$ reinserimenti (possibilmente non disgiunti).
+Gli algoritmi di tipo $k$-OPT si basano sul concetto di:
+\begin{definition}{\textbf{$k$-ottimalità}}
+    Un tour viene definito $k$-ottimo se è impossibile ottenere un tour di costo minore
+    applicando una mossa $k$-OPT.
+\end{definition}
+
+Dalla definizione è evidente che un tour $k$-ottimo sia anche $k'$-ottimo per $1\leq{}k'\leq{}k$ e che
+un tour è ottimo se e solo se è $n$-ottimo. Da queste osservazioni si evince che, generalmente, più
+$k$ è elevato e migliore sarà la precisione dell'algoritmo. Sfortunatamente, il numero di mosse 
+$k$-OPT esplode al crescere di $k$ ed è quindi necessario scegliere un $k$ non troppo elevato. Un ulteriore
+svantaggio è il fatto di dover specificare in anticipo il valore di $k$ anche se non è noto a priori il 
+migliore compromesso tra il tempo di esecuzione e la bontà dell'approssimazione per un fissato $k$ su un 
+preciso grafo.
+
+L'idea di Lin e Kernighan è stata quella di effettuare ``online'' la scelta di $k$: ad ogni step, 
+l'algoritmo esamina una mossa $k$-OPT per valori crescenti di $k$ finché non viene raggiunta una condizione 
+di terminazione. Più precisamente, ad ogni step l'algoritmo cerca di trovare due insiemi di archi 
+$X = \{x_1,\dots,x_k\}$ e $Y = \{y_1,\dots,y_k\}$ tali che il tour ottenuto eliminando gli archi 
+di $X$ e aggiungendo gli archi di $Y$ sia ancora valido. I due insiemi vengono costruiti elemento per elemento.
+Inizialmente $X$ e $Y$ sono vuoti; al passo $i$ vengono aggiunti $x_i$ e $y_i$ rispettivamente a $X$ e $Y$.
+\ \\
+
+Prima di proseguire dimostriamo questo semplice fatto:
+\begin{theorem}
+    Sia $(a_1, a_2, \dots, a_m)$ una sequenza di interi tale che $a_1+a_2+\dots+a_m > 0$. Allora, esiste
+    una permutazione ciclica $\sigma$ tale che, per ogni $1\leq{}i\leq{}m$, $a_{\sigma(1)}+\dots+a_{\sigma(i)} > 0$.
+\end{theorem}
+
+\begin{proof}{\textit{(Per induzione su $m\ge$1)}}\\
+    \textbf{Base:} se $m=1$, $\sigma$ è la permutazione identica $id_1$.\\
+    \textbf{Step:} sia $m>1$ e si considerino i seguenti casi:
+    \begin{itemize}
+        \item se $a_1+\dots+a_{m-1}>0$ allora, per ipotesi induttiva, esiste una
+                permutazione ciclica $\tau$ tale che $a_{\tau(1)}+\dots+a_{\tau(i)} > 0$ per
+                ogni $1\leq{}i\leq{m-1}$. Ma allora $\sigma = \tau{}\circ{}id_m$.
+
+        \item altrimenti, sappiamo che $|a_1+\dots+a_{m-1}| < a_m$, sia quindi $\tau=(2,3,\dots,m,1)$, ovvero
+                la sequenza $(a_m,a_1,a_2,\dots,a_{m-1})$. Ma allora tale sequenza ricade nel caso precedente,
+                per cui esiste una permutazione $\sigma'$ che soddisfa il teorema. Da cui $\sigma=\sigma'\circ\tau$.
+    \end{itemize}
+\end{proof}
+\ \\
+
+Per rendere efficiente la costruzione di $X$ e $Y$, gli archi che vengono scelti devono rispettare alcuni criteri:
+\begin{description}
+    \item[1. Scambio sequenziale:] $x_i, y_i, x_{i+1}$ devono condividere un vertice; più precisamente, vale 
+                $x_i=(t_{2i-1}, t_{2i}), \\y_i=(t_{2i}, t_{2i+1}),\;\; x_{i+1}=(t_{2i+1},t_{2i+2})$ dove $t_i$ indica
+                l'$i$-esimo vertice del tour dopo che è stato effettuato lo scambio $X, Y$.
+
+    \item[2. Fattibilità:] viene richiesto che $x_i=(t_{2i-1}, t_{2i})$ venga scelto in modo tale che se
+                viene scelto $y_i = (t_{2i}, t_1)$, il tour risultante sia valido. In questo modo viene 
+                garantita la possibilità di chiudere il tour in ogni momento, riducendo così il tempo di 
+                esecuzione e semplificando il codice. 
+
+    \item[3. Guadagno positivo:] detti $g_i = w(x_i)-w(y_i)$ e $G_i = \displaystyle\sum_{i=1}^{i}{g_i}$, viene 
+                richiesto $G_i>0$ per ogni $i$. Questo criterio pone una condizione di terminazione molto 
+                efficace nella pratica e, sebbene sembri troppo restrittivo, non lo è affatto in virtù del 
+                Teorema 2.2.1.
+
+    \item[4. Disgiuntività:] viene richiesto che, ad ogni passo, $X\cap{}Y\neq\varnothing$; il criterio 
+                semplifica ulteriormente il codice e fornisce un'altra condizione di terminazione. 
+\end{description}
+
+L'algoritmo (semplificato) viene quindi schematizzato come segue:
+
+\begin{algorithm}[H]
+\caption{}
+\begin{enumerate}
+    \item Si generi un tour $T$ casualmente.
+    \item Si inizializzi $i:=1$. Si Scelga $t_1$.
+    \item Si scelga $x_1=(t_1,t_2) \in T$.
+    \item Si scelga $y_1=(t_2, t_3) \notin T$ tale che $G_1>0$. Se ciò non è possibile, si proceda al passo $12$.
+    \item Sia $i:=i+1$.
+    \item Si scelga $x_i=(t_{2i-1}, t_{2i}) \in T$ tale che:\\
+            (a) Se $t_{2i}$ viene connesso a $t_1$, il risultato deve essere un tour valido $T'$;\\
+            (b) $x_i\neq{}y_s$ per ogni $s<i$;\\
+          Se $w(T') < w(T)$ si salvi $T:=T'$ e si ritorni al passo $2$.
+    \item Si scelga $y_i=(t_{2i}, t_{2i+1}) \notin T$ tale che:\\
+            (a) $G_i>0$;\\
+            (b) $y_i\neq{}x_s$ per ogni $s\leq{}i$;\\
+            (c) $x_{i+1}$ esiste;\\
+          Se tale $y_i$ esiste, si ritorni al passo $5$.
+    \item Se c'è un'alternativa non provata per $y_2$, si imposti $i:=2$ e si ritorni al passo $7$.
+    \item Se c'è un'alternativa non provata per $x_2$, si imposti $i:=2$ e si ritorni al passo $6$.
+    \item Se c'è un'alternativa non provata per $y_1$, si imposti $i:=1$ e si ritorni al passo $4$.
+    \item Se c'è un'alternativa non provata per $x_1$, si imposti $i:=1$ e si ritorni al passo $3$.
+    \item Se c'è un'alternativa non provata per $t_1$, si ritorni al passo $2$.
+    \item Stop.
+\end{enumerate}
+\end{algorithm}
+
+Ai passi $6$ e $7$, l'algoritmo controlla se le scelte per $x_i$ e $y_i$ soddisfino i criteri;
+l'algoritmo originale, tuttavia, permette di indagare più a fondo le scelte che possono essere fatte
+per $i=2$: per alcuni casi è infatti possibile non rispettare, temporaneamente, il criterio di
+\textbf{fattibilità} per ottenere successivamente un tour valido. Lo schema descritto è più semplice anche
+per quanto riguarda il passo $6$: $T$ viene rimpiazzato da $T'$ appena quest'ultimo ha un costo inferiore;
+l'algoritmo originale, invece, continua ad aggiungere potenziali scambi con lo scopo di trovare un tour 
+ancora più vantaggioso, rimpiazzando $T$ con il tour con costo migliore trovato. Questa scelta, tuttavia,
+non produce tour migliori, non migliora il tempo di esecuzione e complica notevolmente il codice\cite{LKH}.\\
+
+Per migliorare le prestazioni dell'algoritmo sono stati aggiunte altre regole con lo scopo di 
+\textit{limitare} e \textit{indirizzare} la scelta dei possibili archi da rimuovere o aggiungere:
+\begin{enumerate}
+    \setcounter{enumi}{4}
+    \item[\textbf{5.}] La ricerca di un arco $y_i=(t_{2i},t_{2i+1})$ viene limitata ai $5$ archi di costo minore
+            adiacen ti a $t_{2i}$.
+    \item[\textbf{6.}] Per $i\geq{}4$ non possono essere rimossi archi che appartengono a tutti i $2-5$
+            tour migliori.
+    \item[\textbf{7.}] La ricerca viene interrotta se il tour corrente è lo stesso di quello trovato all'interazione
+            precedente.
+    \item[\textbf{8.}] Se vi sono più scelte per $y_i (i\geq{}2)$, viene data una priorità $w(x_{i+1})-w(y_i)$.
+    \item[\textbf{9.}] Se vi sono due alternative per $x_4$, viene data priorità a quella con costo maggiore.
+\end{enumerate}
+
+Come ultima euristica, al termine degli step ``sequenziali'', vengono effettuate mosse $4$-OPT non sequenziali
+con lo scopo di ottenere ulteriori miglioramenti.
+
+\section{Euristiche composite e la variante di Helsgaun dell'algoritmo Lin-Kernighan}
+
+Come ultima classe di euristiche vengono presentate le cosiddette \textit{composite} che cercano di ``combinare''
+i vantaggi di entrambe le altre classi. A titolo di esempio verrà descritto l'algoritmo Lin-Kernighan-Helsgaun.\\
+
+In \cite{LKH} viene presentata un'implementazione efficace ispirata all'algoritmo di Lin e Kernighan.
+Sebbene la procedura si basi sempre sull'idea di applicare mosse $k$-OPT determinando $k$ ``al volo'', la 
+variante presentata da Helsgaun applica alcune modifiche riguardo alla scelta dei ``vicini'' da esaminare:
+se in \cite{LK} vengono esaminati i cinque archi incidenti meno costosi (regola $5$), nel nuovo algoritmo
+è centrale il concetto di \textit{insieme dei candidati} che migliora notevolmente la regola $5$. Inoltre,
+se in \cite{LK} le ``mosse base'' (ovvero la \textit{profondità} con cui l'algoritmo esamina le scelte che
+non rispettano il criterio di \textbf{fattibilità}) sono $2/3$-OPT, nel nuovo algoritmo vengono estese a mosse 
+$5$-OPT.
+
+\subsection{Insieme dei candidati e $\alpha$-nearness}
+
+Prima di proseguire, diamo le seguenti definizioni.
+\begin{definition}[\textbf{$1$-Tree}]
+    Sia $G$ un grafo e $T$ uno Spanning Tree su $G\setminus{}\{1\}$. Siano inoltre $e_1, e_2$ due archi 
+    di $G$ incidenti in $1$. Diremo allora che $T_1 := T\cup{}\{e_1, e_2\}$ è un $1$-Tree per $G$.\\
+    Diremo inoltre che $T_1$ è un \textbf{$1$-Tree Minimo} (\textit{Minimum $1$-Tree} oppure M$1$T) se non 
+    esiste un altro $1$-Tree di peso minore.
+\end{definition}
+
+\begin{observation}
+    Un tour ottimo è un $1$-Tree Minimo tra quelli in cui ogni vertice ha grado $2$.
+\end{observation}
+
+\begin{observation}
+    Se un $1$-Tree Minimo è un tour, allora è un tour ottimo.
+\end{observation}
+\ \\
+È quindi possibile riformulare il TSP come:
+\begin{definition}[\textbf{TSP su 1-Tree}]
+    Sia $G$ un grafo pesato e completo. Determinare un $1$-Tree Minimo di $G$ tra quelli che hanno ogni vertice 
+    di grado $2$.
+\end{definition}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=250pt]{img/1Tree.png}
+    \caption{Un $1$-Tree. \textit{Fonte immagine \cite{LKH}}}
+\end{figure}
+
+Come già accennato, nel nuovo algoritmo è fondamentale il ruolo di \textit{insieme dei candidati} che 
+estende e migliora la regola $5$ di \cite{LK}. Tale regola si basa sull'idea (troppo restrittiva) che la 
+probabilità che un arco appartenga al tour ottimo cresca al diminuire del costo dello stesso. Una misura migliore 
+sembra essere, invece, l'appartenenza o meno a un Minimum $1$-Tree: risulta infatti che, in media, un arco 
+appartente ad un M$1$T abbia probabilità $0.7\sim0.8$ di appartenere a un tour ottimo \cite{LKH}. L'idea è quindi quella di 
+costruire l'insieme dei candidati a partire da una misura di ``vicinanza'' a un M$1$T.
+
+\begin{definition}[\textbf{$\alpha$-nearness}]
+    Sia $T_1$ un Minimum $1$-Tree di peso $w(T_1)$ e sia $T_1^+(i, j)$ il Minimum $1$-Tree di $G$ che contiene 
+    l'arco $(i, j)$. Definiamo quindi la $\alpha$-nearness di (i, j) come
+    $$\alpha(i, j) := w(T_1^+(i,j)) - w(T_1)$$
+\end{definition}
+\ \\
+Esaminiamo due semplici proprietà di $\alpha$.
+\begin{theorem}\ \\
+    (1) $\alpha(i,j) \geq 0$ per ogni arco $(i, j)$.\\
+    (2) Se $(i, j)$ appartiene a qualche M$1$T, allora $\alpha(i,j)=0$.
+\end{theorem}
+
+\begin{proof}\ \\
+    (1) $\alpha(i,j) = w(T_1^+(i,j))-w(T_1) \geq w(T_1)-w(T_1) = 0$.\\
+    (2) $\alpha(i,j) = w(T_1^+(i,j))-w(T_1) = w(T_1)-w(T_1) = 0$.
+\end{proof}
+\ \\
+La prima difficoltà si presenta nel calcolo della $\alpha$-nearness per ogni arco del grafo: dalla definizione 
+sembra necessario, ogni volta, aggiungere l'arco $(i,j)$ a un M$1$T ed eliminare l'ipotetico ciclo che si 
+verrebbe a formare nel caso in cui $(i.j)$ non sia già presente in $T_1$. Tale operazione ha costo $\mathcal{O}(n)$ 
+per ogni arco del grafo, per un costo totale di $\mathcal{O}(n^3)$ per computare tutte le $\alpha$. L'osservazione 
+chiave è la seguente.
+
+\begin{observation}
+    Sia $\beta(i,j)$ il costo dell'arco da rimuovere (\textit{i.e. il più costoso}) se, all'inserimento di $(i,j)$,
+    si forma un ciclo. Ne segue che $\alpha(i,j)=w(i,j)-\beta(i,j)$. Si considerino quindi $i$ e $(j_1,j_2)$ 
+    tale che $j_1$ si trovi nel ciclo formatosi all'aggiunta dell'arco $(i,j_2)$. Allora 
+    $$\beta(i,j_2) = \max\{\beta(i,j_1), w(j_1,j_2)\}$$
+\end{observation}
+\ \\
+Da questa osservazione è possibile calcolare, in tempo ottimale $\Theta(n^2)$, le $\alpha$ di tutti gli archi del 
+grafo. L'algoritmo sfrutta la programmazione dinamica e assume che i vertici siano ordinati topologicamente rispetto 
+alla relazione ``discendente'' venutasi a creare durante la costruzione dell'M$1$T (ad esempio con Prim).
+
+\begin{algorithm}[H]
+\caption{}
+\begin{algorithmic}
+\Require{$dad(i)=j \;\Longrightarrow\; i<j$}
+\Function{ComputeBeta}{$ $}
+    \State $\beta \gets \texttt{new Matrix}(n, n)$
+    \For{$i \gets 2,\; i < n,\; i \gets i+1$}
+        \State $\beta[i][i] \gets -\infty$
+        \For{$j \gets i+1,\; j \leq n,\; j \gets j+1$}
+            \State $\beta[i][j] \gets \max\big\{\beta[i][dad(j)],\; w(j, dad(j))\big\}$
+            \State $\beta[j][i] \gets \beta[i][j]$
+        \EndFor
+    \EndFor
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+Sebbene l'algoritmo necessiti di spazio quadratico per la matrice $\beta$, è possibile modificarlo 
+in modo da richiedere solo spazio lineare e riuscire in ogni caso a calcolare tutti gli $\alpha$ \cite{LKH}.
+Tale pseudocodice viene omesso.
+
+\ \\
+Nonostante gli $\alpha$ siano migliori rispetto al semplice costo per definire la regola $5$, è possibile 
+migliorare ulteriormente il loro effetto applicando delle trasformazioni ai pesi degli archi del grafo.
+\begin{observation}
+    Ogni tour è un $1$-Tree, quindi $w(T_1)$ è una limitazione inferiore al costo del tour ottimo.
+\end{observation}
+\begin{observation}
+    Se il peso di tutti gli archi adiacenti a $v_i$ viene incrementato dello stesso valore $\pi_i$, un 
+    tour che era precedentemente ottimo lo è ancora. Inoltre, se $T_{\pi}$ è un M$1$T sul grafo perturbato 
+    $G_{\pi}$, vale $$w(T_{\pi}) - 2\displaystyle\sum_{i=1}^{n}{\pi_i} \leq w(T_{OPT})$$.
+\end{observation}
+\begin{observation}
+    Dalle osservazioni precedenti si ottiene che il valore $f(\pi) = w(T_{\pi}) - 2\displaystyle\sum_{i=1}^{n}{\pi_i}$ 
+    è ancora una limitazione inferiore al tour ottimo per $G$.
+\end{observation}
+\ \\
+L'attenzione viene quindi spostata sulla ricerca della perturbazione $\pi$ che massimizzi $f(\pi)$. Tale 
+massimizzazione è nota come limitazione di Held-Karp.
+
+La strategia per stimare la perturbazione ottima è nota come ``ottimizzazione del subgradiente'' e l'idea 
+è quella di, iterativamente, considerare il subgradiente di $f$ ed effettuare un ``passo'' nel suo verso. 
+Si può dimostrare che, in questo caso, un subgradiente per $f$ è $v := deg - \mathbf{2}$, dove $deg$ è il 
+vettore dei gradi dei vertici in $T_{\pi}$ e $\mathbf{2}$ è un vettore di soli $2$. L'idea è quella di rendere 
+più corti gli archi incidenti a vertici di grado $1$, più lunghi quelli incidenti a vertici di grado maggiore 
+di $2$ e di non cambiare quelli incidenti a vertici di grado esattamente $2$: in questo modo, si costringe 
+$T_{\pi}$ ad ``alleggerire'' i vertici con troppi archi adiacenti e ad ``appesantire'' i vertici di grado $1$,
+nella speranza di ottenere un tour. Infatti, in virtù dell'osservazione 2.3.2, se $T_{\pi}$ è un tour allora è 
+un tour ottimo.
+
+La procedura iterativa viene così schematizzata:
+
+\begin{algorithm}[H]
+\caption{}
+\begin{algorithmic}[1]
+\Function{ascent}{$ $}
+    \State $\pi \gets \mathbf{0}$
+    \State $F \gets -\infty$
+    \State $k \gets 0$
+    \Repeat
+        \State $T_{\pi} \gets \texttt{getMin1Tree}(\pi)$
+        \State $f \gets w(T_{\pi})$
+        \For{$i \gets 1,\; i \leq n,\; i \gets k+1$}
+            \State $f \gets f - 2\pi[i]$
+        \EndFor
+        \State $F \gets \max\{F, f\}$
+        \State $v \gets deg(T_{\pi}) - \mathbf{2}$
+        \If{$\norm{v} = 0$}
+            \State \Return $F$
+        \EndIf
+        \State $t \gets \texttt{getStepSize}(k)$
+        \State $\pi \gets \pi + tv$
+        \State $k \gets k+1$
+    \Until{$\texttt{exitCondition} = \texttt{True}$}
+    \State \Return $F$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+% 
+% \begin{enumerate}
+%     \item Sia $k:=0$, $\pi_0:=\mathbf{0}$ e $F = -\infty$.
+%     \item Si costruisca un M$1$T $T_{\pi_k}$.
+%     \item Si calcoli $f(\pi_k) = w(T_{\pi_k}) - 2\displaystyle\sum_{i=1}^{n}{\pi_k(i)}$.
+%     \item Sia $F := \max\{F, f(\pi_k)\}$.
+%     \item Sia $v_k := deg_k - \mathbf{2}$, dove $deg_k$ contiene i gradi dei vertici di $T_{\pi_k}$.
+%     \item Se $\norm{v_k} = 0$, allora $T_{\pi_k}$ è un tour ottimo. Stop.
+%     \item Se viene raggiunta una condizione di terminazione, stop.
+%     \item Si scelga la dimensione del passo $t_k$.
+%     \item Si consideri $\pi_{k+1} := \pi_k + t_kv_k$.
+%     \item Si incrementi $k := k+1$ e si ritorni al passo $2$.
+% \end{enumerate}
+\ \\
+La convergenza del metodo alla limitazione di Held-Karp è assicurata se $\displaystyle\lim_{k\to\infty}{t_k}=0$ e 
+$\displaystyle\sum_{k=0}^{\infty}{t_k} = \infty$~\cite{subgr}. Tuttavia, anche se la convergenza è assicurata
+(\textit{ad esempio per $t_k:=\frac{t_0}{k}$}), è necessario che sia veloce. Vi sono molteplici strategie che 
+sono efficaci nella pratica, tuttavia dipendono dal grafo che si sta considerando. Helsgaun propone la 
+seguente:
+\begin{itemize}
+    \item La dimensione del passo rimane costante per ogni ``periodo''.
+    \item Quando un periodo termina, viene dimezzato.
+    \item La lunghezza del primo periodo viene impostata a $\frac{n}{2}$.
+    \item $t_0 := 1$ e, durante il primo periodo, viene raddoppiato ad ogni step fintantoché $F$ non 
+            viene incrementato.
+    \item Se l'ultimo step di un periodo incrementa $F$, allora viene raddoppiato.
+    \item L'algoritmo termina se $v_k = \mathbf{0}$ oppure il periodo o il passo diventano 0.
+\end{itemize}
+
+Una volta trovata la perturbazione $\pi$ viene calcolato il nuovo valore di ``vicinanza migliorata'' che 
+denoteremo con $\alpha_{\pi}$.
+
+\subsection{La scelta del tour iniziale}
+
+L'algoritmo Lin-Kernighan applica molteplici scambi sullo stesso problema, utilizzando ad ogni 
+iterazione un tour generato casualmente. Helsgaun, invece, sfrutta un'euristica di tipo 
+``tour construction'':
+\begin{algorithm}[H]
+\caption{}
+\begin{enumerate}
+    \item Si scelga un vertice $i$ casualmente.
+    \item Si scelga un vertice $j$, non ancora scelto, nel modo seguente:
+    \begin{enumerate}
+        \item Se possibile, si scelga $j$ tale che:
+        \begin{enumerate}
+            \item $(i,j)$ è un ``candidato''
+            \item $\alpha(i,j)=0$
+            \item $(i,j)$ appartiene al migliore tour trovato fin'ora
+        \end{enumerate}
+        \item Altrimenti, si scelga $j$ tale che $(i,j)$ sia un ``candidato''.
+        \item Altrimenti, si scelga $j$ casualmente.
+    \end{enumerate}
+    \item Sia $i:=j$, se vi sono ancora vertici da scegliere, si ritorni al passo $2$.
+\end{enumerate}
+\end{algorithm}

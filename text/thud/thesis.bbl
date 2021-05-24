@@ -1,0 +1,55 @@
+\begin{thebibliography}{10}
+
+\bibitem{CHR}
+Nicos Christofides.
+\newblock Worst-case analysis of a new heuristic for the travelling salesman
+  problem.
+\newblock 1976.
+
+\bibitem{LKH}
+Keld Helsgaun.
+\newblock An effective implementation of the lin-kernighan traveling salesman
+  heuristic.
+\newblock {\em European Journal of Operational Research}, 126:106--130, 2000.
+
+\bibitem{STSP}
+David Johnson e Lyle A.~Mcgeoch.
+\newblock Experimental analysis of heuristics for the stsp.
+\newblock 2001.
+
+\bibitem{STRIP}
+R.~M. Karp e J.~M. Steele.
+\newblock {\em Probabilistic analysis of heuristics}.
+\newblock 1985.
+
+\bibitem{3opt}
+Giuseppe Lancia e Marcello Dalpasso.
+\newblock Speeding-up the exploration of the 3-opt neighborhood for the tsp.
+\newblock 2018.
+
+\bibitem{LK}
+Shen Lin e Brian~W. Kernighan.
+\newblock An effective heuristic algorithm for the travelling-salesman problem.
+\newblock {\em Operations Research}, 21:498--516, 1973.
+
+\bibitem{Poli}
+Alberto Policriti.
+\newblock Appunti per il laboratorio di algoritmi e strutture dati.
+\newblock 2018.
+
+\bibitem{subgr}
+Boris Polyak.
+\newblock A general method for solving extremum problems.
+\newblock {\em Soviet Mathematics. Doklady}, 8:593--597, 1967.
+
+\bibitem{tsplib}
+Gerhard Reinelt.
+\newblock {TSPLIB}--a traveling salesman problem library.
+\newblock {\em ORSA Journal on Computing}, 3(4):376--384, 1991.
+
+\bibitem{Neck}
+G\"unter Rothe.
+\newblock Two solvable cases of the traveling salesman problem.
+\newblock 1988.
+
+\end{thebibliography}

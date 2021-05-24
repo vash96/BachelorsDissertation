@@ -1,0 +1,24 @@
+\babel@toc {italian}{}
+\babel@toc {italian}{}
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {2.1}{\ignorespaces Una rappresentazione grafica degli schemi di reinserimenti. \textit {Fonte immagine \cite {3opt}}.\relax }}{13}{figure.caption.4}
+\contentsline {figure}{\numberline {2.2}{\ignorespaces Un $1$-Tree. \textit {Fonte immagine \cite {LKH}}\relax }}{19}{figure.caption.5}
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Il codice per la ricerca del circuito euleriano.\relax }}{24}{figure.caption.6}
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Il tipo di dato HeapElement.\relax }}{25}{figure.caption.7}
+\contentsline {figure}{\numberline {3.3}{\ignorespaces Tipi di dato LKHNode e Candidate, i commenti sono sufficientemente esplicativi.\relax }}{26}{figure.caption.8}
+\contentsline {figure}{\numberline {3.4}{\ignorespaces Lo ``scheletro'' della procedura.\relax }}{26}{figure.caption.9}
+\contentsline {figure}{\numberline {3.5}{\ignorespaces Vengono descritte le trasformazioni che permettono di effettuare una 3-OPT come come combinazione di 2-OPT. Vi sono quattro tipi di 3-OPT sequenziali che emergono dall'algoritmo. Tre di questi sono simmetriche per rotazione al caso (a): questo pu\IeC {\`o} essere simulato con due 2-OPT. Notiamo poi che il quarto tipo, il caso (b), \IeC {\`e} riconducibile al caso (a) mediante un'applicazione di 2-OPT.\relax }}{27}{figure.caption.10}
+\contentsline {figure}{\numberline {3.6}{\ignorespaces Risultati \texttt {NN}.\relax }}{29}{figure.caption.11}
+\contentsline {figure}{\numberline {3.7}{\ignorespaces Risultati \texttt {NI}.\relax }}{30}{figure.caption.12}
+\contentsline {figure}{\numberline {3.8}{\ignorespaces Risultati \texttt {CHR}.\relax }}{30}{figure.caption.13}
+\contentsline {figure}{\numberline {3.9}{\ignorespaces Risultati \texttt {L3OR}.\relax }}{31}{figure.caption.14}
+\contentsline {figure}{\numberline {3.10}{\ignorespaces Risultati \texttt {L3OC}.\relax }}{31}{figure.caption.15}
+\contentsline {figure}{\numberline {3.11}{\ignorespaces Risultati \texttt {RL3O}.\relax }}{32}{figure.caption.16}
+\contentsline {figure}{\numberline {3.12}{\ignorespaces Risultati \texttt {LKH}.\relax }}{33}{figure.caption.17}
+\contentsline {figure}{\numberline {3.13}{\ignorespaces Confronto diretto dei tempi di esecuzione delle diverse euristiche.\relax }}{34}{figure.caption.18}
+\contentsline {figure}{\numberline {3.14}{\ignorespaces Confronto diretto dei costi dei tour trovati dalle diverse euristiche.\relax }}{35}{figure.caption.19}
+\contentsline {figure}{\numberline {3.15}{\ignorespaces Confronto tra efficienza ed efficacia di \texttt {RL3O} al variare del numero massimo di \textit {exchanges}.\relax }}{36}{figure.caption.20}
+\contentsline {figure}{\numberline {3.16}{\ignorespaces Confronto tra efficienza ed efficacia di \texttt {LKH} al variare del numero massimo di candidati per ogni \textit {candidate set}.\relax }}{36}{figure.caption.21}
+\addvspace {10\p@ }

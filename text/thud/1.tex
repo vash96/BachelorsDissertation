@@ -1,0 +1,83 @@
+\chapter{Il Commesso Viaggiatore}
+
+Il Problema del Commesso Viaggiatore può essere formulato, informalmente, in questo modo:\\
+\ \\
+``Un commerciante deve visitare $n$ città in modo tale da visitarle tutte una e una sola volta, 
+ritornando al punto di partenza. Ogni coppia di città $(i,j)$ è collegata da una strada e ogni strada, 
+per essere percorsa, necessita il pagamento di un pedaggio. Il commerciante, essendo molto avido, vuole 
+trovare il percorso che gli assicuri di spendere il meno possibile.''
+\ \\
+\ \\
+Nonostante la facilità con cui venga espresso, il Commesso Viaggiatore è tutt'altro che semplice
+da risolvere. È un problema di Ottimizzazione Combinatoria noto da decenni e, date le sue potenzialmente 
+infinite applicazioni pratiche, è ancora oggi uno dei problemi più studiati. Dal punto di vista formale, 
+il TSP (dall'inglese \textit{Traveling Salesman Problem}) consiste nella ricerca del Circuito Hamiltoniano di 
+costo minimo in un grafo pesato. È possibile dare diverse formulazioni equivalenti al problema: di seguito
+ne diamo due.
+
+\begin{definition}[\textbf{TSP su grafi}]
+    Sia $G=(V,E)$ un grafo di $n$ vertici completo e pesato con funzione di peso $w:E \rightarrow \mathbb{N}$.
+    Vogliamo determinare una permutazione dei vertici $(v_1,v_2,\dots,v_n)$ tale che
+    $$w(v_n,v_1) + \displaystyle\sum_{i=1}^{n-1}{w(v_i,v_{i+1})}$$
+    sia minima.
+\end{definition}
+
+\begin{definition}[\textbf{TSP su matrici}]
+    Sia $n \in \mathbb{N}_+$ e $C=(c_{i,j})$ una matrice $n\times{}n$ a valori in $\mathbb{N}$ tale che 
+    $c_{i,i}=0$ per ogni $i\in\{1,2,\dots,n\}$. Determinare una permutazione $(i_1,i_2,\dots,i_n)$
+    di $(1,2,\dots,n)$ tale che
+    $$c_{i_n,i_1} + \displaystyle\sum_{j=1}^{n-1}{c_{i_j,i_{j+1}}}$$
+    sia minima.
+\end{definition}
+
+Le due definizioni sono banalmente equivalenti e ne verrà utilizzata una piuttosto che l'altra in base 
+al contesto. Inoltre, diamo alcune definizioni ``classiche'' e convenzioni.
+
+\begin{definition*}\ \\
+    (1) Un tour è una permutazione dei vertici.\\
+    (2) Costo e peso verranno utilizzati come sinonimi.\\
+    (3) Il Commesso Viaggiatore Simmetrico (STSP) consiste nell'ulteriore ipotesi che la matrice $C$ sia simmetrica.\\
+    (4) Per istanza geometrica si intende che $w$ soddisfa la disuguaglianza triangolare.\\
+    (5) Per istanza euclidea si intende che $w$ è la funzione di distanza euclidea.
+\end{definition*}
+\ \\
+
+La relazione che TSP sembra avere con il problema del Circuito Hamiltoniano (HAM-CYCLE) sottintende una 
+difficoltà computazionale quantomeno simile. Definiamo innanzitutto il linguaggio che stiamo considerando.
+\begin{definition}[\textbf{TSP} come linguaggio formale]
+    \begin{align*}
+    \textbf{TSP} =\{\langle G,w,k\rangle \;:\; & G = (V,E) \text{ è un grafo completo},\\
+                                            & w: E \rightarrow \mathbb{R} \text{ è una funzione di costo},\\
+                                            & k \in \mathbb{N},\\
+                                            & G \text{ possiede un tour hamiltoniano di costo } \leq k\}
+    \end{align*}
+\end{definition}
+
+\begin{theorem}
+    \textbf{TSP} è NP-Completo.
+\end{theorem}
+
+\begin{proof}
+    La dimostrazione viene fatta separando l'appartenenza ad NP dalla hardness.
+    \begin{description}
+        \item[\textbf{TSP $\in$ NP:}] consideriamo un'istanza di \textbf{TSP} e una soluzione.
+                La verifica della soluzione può essere svolta in tempo polinomiale: si controlla che ogni 
+                vertice appartenga alla soluzione e si controlla che la somma dei pesi degli archi sia al più $k$.
+                Per \textit{Guess\&Verify} \textbf{TSP} è in NP.
+
+        \item[\textbf{TSP $\in$ NP-hard:}] mostriamo che \textbf{HAM-CYCLE} $\preceq$ \textbf{TSP}.\\
+                Sia $G=(V,E)$ un'instanza di \textbf{HAM-CYCLE}. Costruiamo $G'$, completo e pesato con funzione 
+                $$w(i,j) = \begin{cases}
+                            0 & \text{se } (i,j) \in E\\
+                            1 & \text{se } (i,j) \notin E
+                            \end{cases}$$
+                Consideriamo quindi l'istanza $\langle G',w,0\rangle $ di \textbf{ TSP}. Si ha quindi che 
+                se $\langle G\rangle \in \textbf{HAM-CYCLE}$ allora esiste un circuito hamiltoniano in G, ma 
+                per costruzione $G'$ ammette un circuito hamiltoniano di costo $0$, quindi 
+                $\langle G',w,0\rangle \in \textbf{TSP}$.\\
+                Al contrario, se $\langle G',w,0\rangle \in \textbf{TSP}$ allora $G'$ ammette un circuito 
+                hamiltoniano di costo $0$ e, per $w$, ogni arco del circuito ha costo $0$. Ma allora ogni 
+                arco del circuito è in $E$ e quindi anche $G$ ammette un circuito hamiltoniano, quindi 
+                $\langle G\rangle \in \textbf{HAM-CYCLE}$.
+    \end{description}
+\end{proof}

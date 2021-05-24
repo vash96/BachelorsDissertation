@@ -1,0 +1,43 @@
+\chapter*{Introduzione}
+
+Il Problema del Commesso Viaggiatore consiste nella ricerca del Circuito Hamiltoniano
+di costo minimo in un grafo pesato. Formalmente, dato un grafo $G=(V,E)$ e una funzione di peso
+$w: E \rightarrow \mathbb{N}$ siamo interessati ad una permutazione dei vertici del grafo
+$(v_{i_1}, v_{i_2}, \dots, v_{i_{|V|}})$ che minimizzi la quantità
+$$W = w(v_{i_{|V|}}, v_{i_1}) \;+ \displaystyle\sum_{j=1}^{|V|-1}{w(v_{i_j}, v_{i_{j+1}})}$$
+
+Nell'ambito della Ricerca Operativa e dell'Ottimizzazione
+Combinatoria, l'importanza del TSP (dall'inglese \textit{Traveling Salesman Problem}) deriva dal 
+fatto di poterlo utilizzare per descrivere un ricco insieme di \textit{real world problems} riguardo, 
+ad esempio, Cristallografia, \textit{Vehicle routing}, \textit{Scheduling}, Robotica, ecc...
+
+Dal punto di vista teorico, la versione decisionale di TSP è notoriamente NP-Completa e ciò lo
+rende, nella pratica, intrattabile anche per piccole istanze del problema.
+Dalla necessità di risolvere il TSP e dall'impossibilità (assumendo $P\neq{}NP$) di poterlo
+fare efficientemente per una qualsiasi istanza del problema, nasce il concetto di ``Euristica'', ovvero una tecnica che ha
+lo scopo di trovare in un tempo ragionevole un'approssimazione sufficientemente buona della soluzione esatta.
+\ \\
+Nell'ambito del TSP possiamo dividere le euristiche in tre classi:
+\begin{itemize}
+    \item Tour construction: l'algoritmo costruisce il circuito aggiungendo, passo dopo passo, un nuovo
+            vertice a seconda di una strategia più o meno elaborata
+    %
+    \item Tour improvement: a partire da un circuito arbitrario, l'algoritmo esegue delle ``mosse'' che hanno
+            lo scopo di migliorarlo
+    %
+    \item Composite: vengono combinate le tecniche di costruzione e di miglioramento
+\end{itemize}
+
+In questa tesi studieremo il Commesso Viaggiatore Simmetrico (STSP), ovvero assumeremo
+che il grafo sia non diretto, completo e con funzione di peso simmetrica. Presenteremo delle euristiche
+appartenenti ad ognuna delle classi e ne analizzeremo le performance sia dal punto di vista dell'efficienza
+in tempo, sia dal punto di vista dell'efficacia nel senso della bontà della soluzione trovata rispetto all'ottimo.
+Gli algoritmi scelti sono Nearest Neighbor, Nearest Insertion, Christofides, 3-OPT (in tre versioni) e 
+Lin-Kernighan-Helsgaun: per quanto riguarda Christofides e Lin-Kernighan-Helsgaun si è deciso di implementare 
+una versione più semplice degli algoritmi in letteratura; possiamo quindi dire che le euristiche implementate 
+siano solamente ispirate a quelle descritte in \cite{CHR}, \cite{LKH}; per quanto riguarda 3-OPT, 
+si è scelto di implementare la versione descritta in \cite{3opt}.
+
+I test sono stati effettuati su un insieme di grafi selezionati da TSPLIB\cite{tsplib} e su un insieme di grafi generati
+casualmente. Le misurazioni sono state effettuate seguendo le procedure descritte in \cite{Poli}. Tutti i programmi sono 
+stati scritti in \texttt{C++}.

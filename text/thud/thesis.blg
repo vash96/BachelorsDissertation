@@ -1,0 +1,53 @@
+This is BibTeX, Version 0.99d (TeX Live 2018)
+Capacity: max_strings=100000, hash_size=100000, hash_prime=85009
+The top-level auxiliary file: thesis.aux
+The style file: plain_italian.bst
+Database file #1: thud.bib
+Warning--empty journal in CHR
+Warning--empty journal in STSP
+Warning--empty publisher in STRIP
+Warning--empty journal in 3opt
+Warning--empty journal in Poli
+Warning--empty journal in Neck
+You've used 10 entries,
+            2133 wiz_defined-function locations,
+            562 strings with 5181 characters,
+and the built_in function-call counts, 2556 in all, are:
+= -- 247
+> -- 94
+< -- 0
++ -- 41
+- -- 28
+* -- 145
+:= -- 456
+add.period$ -- 30
+call.type$ -- 10
+change.case$ -- 43
+chr.to.int$ -- 0
+cite$ -- 16
+duplicate$ -- 106
+empty$ -- 213
+format.name$ -- 28
+if$ -- 515
+int.to.chr$ -- 0
+int.to.str$ -- 10
+missing$ -- 11
+newline$ -- 53
+num.names$ -- 20
+pop$ -- 51
+preamble$ -- 1
+purify$ -- 34
+quote$ -- 0
+skip$ -- 72
+stack$ -- 0
+substring$ -- 145
+swap$ -- 5
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 38
+warning$ -- 6
+while$ -- 26
+width$ -- 12
+write$ -- 100
+(There were 6 warnings)
